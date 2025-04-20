@@ -15,7 +15,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_community.chat_models import ChatOpenAI
 
 # ---- Set Your API Key Here ----
-os.environ["OPENAI_API_KEY"] = "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"
 
 DB_FAISS_PATH = "vectorstore/db_faiss"
 
@@ -26,9 +25,9 @@ def get_vectorstore():
     return db
 
 def load_llm_openrouter():
-    ChatOpenAI(
+    return ChatOpenAI(
     openai_api_base="https://openrouter.ai/api/v1",
-    openai_api_key="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",
+    openai_api_key="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",
     default_headers={
         "HTTP-Referer": "http://localhost",  # Replace with your real domain if deployed
         "User-Agent": "LangChain-App"
@@ -211,6 +210,5 @@ custom_css = """
     }
 </style>
 """
-
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
