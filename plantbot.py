@@ -1,30 +1,21 @@
 import os
-import sys
-os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"  # Disable problematic watcher
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Prevent HuggingFace tokenizer warnings
-if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
-    import asyncio
-    try:
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    except:
-        pass
-
 import io
 import re
 import json
 import time
+import uuid
 import streamlit as st
 from gtts import gTTS
 from datetime import datetime
 from langdetect import detect
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings  # New
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.chat_models import ChatOpenAI
 
-# Set your Google API key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBzltFuAxizZPa6yfgkolS0-5BvlIIOcYI"
+# ---- Set Your API Key Here ----
+os.environ["OPENAI_API_KEY"] = "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"
 
 DB_FAISS_PATH = "vectorstore/db_faiss"
 
@@ -34,12 +25,16 @@ def get_vectorstore():
     db = FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
     return db
 
-def load_llm_google():
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        temperature=0.5,
-        max_output_tokens=512
-    )
+def load_llm_openrouter():
+    ChatOpenAI(
+    openai_api_base="https://openrouter.ai/api/v1",
+    openai_api_key="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",
+    default_headers={
+        "HTTP-Referer": "http://localhost",  # Replace with your real domain if deployed
+        "User-Agent": "LangChain-App"
+    },
+    model="mistralai/mistral-7b-instruct"
+)
 
 
 def detect_language(text):
@@ -65,15 +60,15 @@ def extract_sources(source_documents):
 def format_sources(sources):
     if not sources:
         return ""
-    lines = ["\n**Sources:**"]
+    lines = ["\n*Sources:*"]
     for idx, src in enumerate(sources, 1):
-        lines.append(f"{idx}. `{src}`")
+        lines.append(f"{idx}. {src}")
     return "\n".join(lines)
 
 def highlight_keywords(text):
     keywords = ["strawberry", "disease", "soil", "climate", "water", "fertilizer"]
     for kw in keywords:
-        text = re.sub(fr"\b({kw})\b", r"**\1**", text, flags=re.IGNORECASE)
+        text = re.sub(fr"\b({kw})\b", r"\1**", text, flags=re.IGNORECASE)
     return text
 
 # ----------------- MAIN APP -----------------
@@ -114,7 +109,7 @@ def main():
 
             vectorstore = get_vectorstore()
             qa_chain = RetrievalQA.from_chain_type(
-                llm=load_llm_google(),
+                llm=load_llm_openrouter(),
                 chain_type="stuff",
                 retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
                 return_source_documents=True,
@@ -217,5 +212,5 @@ custom_css = """
 </style>
 """
 
-if __name__ == "__main__":
+if __name__ == "_main_":
     main()
